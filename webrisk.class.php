@@ -51,6 +51,7 @@ class Google_Webrisk {
 
 		$url = self::get_api_uri( 'threatLists:computeDiff', array(
 			'threatType' => 'MALWARE',
+			'versionToken' => $this->version_token,
 		) );
 
 		$response = self::query_uri( $url );
