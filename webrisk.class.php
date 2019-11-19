@@ -73,8 +73,8 @@ class Google_Webrisk {
 			// It's a diff.  Add some in, delete others.
 		}
 
-		$this->nextDiff = $json->recommendedNextDiff;
-		$this->versionToken = $json->newVersionToken;
+
+		self::store_prefixes( $prefixes );
 
 	//	var_dump( $json );
 
