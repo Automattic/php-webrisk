@@ -69,8 +69,6 @@ class Google_Webrisk {
 				$prefixes = array_merge( $prefixes, $new_prefixes );
 			}
 			echo "Found " . sizeof( $prefixes ) . " prefixes.\r\n";
-			echo "The first 100:\r\n";
-			print_r( array_slice( $prefixes, 0, 100 ) );
 		} elseif ( 'DIFF' === $json->responseType ) {
 			// It's a diff.  Add some in, delete others.
 		}
