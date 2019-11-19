@@ -20,6 +20,28 @@ class Google_Webrisk {
 		return $this;
 	}
 
+	// https://dbdiagram.io/d/5dd415caedf08a25543e1d90
+	private static function clear_db() {
+		$sql = ( 'TRUNCATE `webrisk`' );
+		echo $sql;
+	}
+
+	private static function store_prefixes( $hash_prefixes ) {
+		global $db;
+		while ( sizeof( $hash_prefixes ) ) {
+			$insert_batch = array_splice( $hash_prefixes, 0, 500 );
+		//	echo "Inserting " . sizeof( $insert_batch ) . " prefixes, " . sizeof( $hash_prefixes ). " remaining.\r\n";
+
+			$sql = "INSERT INTO `webrisk` (`hash`) VALUES ('" . implode( "', '", $insert_batch ) . "')" . "\r\n";
+			echo $sql;
+		}
+
+	}
+
+	private static function set( $property, $value ) {
+		// return wp_cache_set( $property, $value, 'webrisk' );
+	}
+
 	/**
 	 * Build a url to query the api.  Includes all get query args passed in, as well
 	 * as automatically adding the api key for all requests.
