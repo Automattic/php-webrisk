@@ -62,7 +62,10 @@ class Google_Webrisk {
 			$hashes = $json->additions->rawHashes;
 			$prefixes = array();
 			foreach ( $hashes as $hash_additions ) {
-				$new_prefixes = str_split( $hash_additions->rawHashes, $hash_additions->prefixSize );
+				$new_prefixes = str_split(
+					bin2hex( base64_decode( $hash_additions->rawHashes ) ),
+					2 * $hash_additions->prefixSize
+				);
 				$prefixes = array_merge( $prefixes, $new_prefixes );
 			}
 			echo "Found " . sizeof( $prefixes ) . " prefixes.\r\n";
