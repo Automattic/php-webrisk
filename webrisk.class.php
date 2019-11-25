@@ -64,25 +64,31 @@ class Google_Webrisk {
 	}
 
 	// https://dbdiagram.io/d/5dd415caedf08a25543e1d90
-	private static function clear_db() {
-		$sql = ( 'TRUNCATE `webrisk`' );
-		echo $sql;
+	private static function clear_db( $type ) {
+		$table = self::get_db_table( $type );
+		$sql = "TRUNCATE `{$table}`";
+		// echo $sql;
 	}
 
-	private static function store_prefixes( $hash_prefixes ) {
-		global $db;
+	private static function delete_prefixes( $type, $prefix_indices ) {
+		$table = self::get_db_table( $type );
+		$sql = "SELECT  `hash`,
+				ROW_NUMBER() OVER ( ORDER BY `hash` ) indices,
+			FROM	`{$table}`
+			WHERE	indices IN ( " . implode( ', ', array_map( 'intval', $prefix_indices ) ) . " ) ";
+		// todo: write a delete statement with this as a nested query?
+		// echo $sql;
+	}
+
+	private static function store_prefixes( $type, $hash_prefixes ) {
+		$table = self::get_db_table();
+		$chunk_size = 500;
 		while ( sizeof( $hash_prefixes ) ) {
-			$insert_batch = array_splice( $hash_prefixes, 0, 500 );
-		//	echo "Inserting " . sizeof( $insert_batch ) . " prefixes, " . sizeof( $hash_prefixes ). " remaining.\r\n";
-
-			$sql = "INSERT INTO `webrisk` (`hash`) VALUES ('" . implode( "', '", $insert_batch ) . "')" . "\r\n";
-			echo $sql;
+			$insert_batch = array_splice( $hash_prefixes, 0, $chunk_size );
+			$imploded = "'" . implode( "', '", $insert_batch ) . "'";
+			$sql = "INSERT INTO `{$table}` (`hash`) VALUES ( {$imploded} )";
+			// echo $sql;
 		}
-
-	}
-
-	private static function set( $property, $value ) {
-		// return wp_cache_set( $property, $value, 'webrisk' );
 	}
 
 	/**
