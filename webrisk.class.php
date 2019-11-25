@@ -120,7 +120,7 @@ class Google_Webrisk {
 	public function update_hashes( $type ) {
 		$url = self::get_api_uri( 'threatLists:computeDiff', array(
 			'threatType' => self::get_threat_type( $type ),
-			'versionToken' => $this->version_token,
+			// 'versionToken' => $this->version_token,
 		) );
 
 		$response = self::query_uri( $url );
@@ -142,10 +142,11 @@ class Google_Webrisk {
 			// It's a diff.  Add some in, delete others.
 		}
 
-		$this->nextDiff = $json->recommendedNextDiff;
-		$this->versionToken = $json->newVersionToken;
 
 		self::store_prefixes( $prefixes );
+		// store these
+		// $json->recommendedNextDiff;
+		// $json->newVersionToken;
 
 	//	var_dump( $json );
 
