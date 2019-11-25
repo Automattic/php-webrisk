@@ -142,8 +142,8 @@ class Google_Webrisk {
 			// It's a diff.  Add some in, delete others.
 		}
 
+		self::store_prefixes( $type, $prefixes );
 
-		self::store_prefixes( $prefixes );
 		// store these
 		// $json->recommendedNextDiff;
 		// $json->newVersionToken;
