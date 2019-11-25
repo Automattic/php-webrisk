@@ -153,6 +153,17 @@ class Google_Webrisk {
 	}
 
 	/**
+	 * Check the sums.  Probably can just use `===` instead of `hash_equals()`
+	 * as it's not a timing attack concern.
+	 */
+	public function checksum( $type, $sha256_checksum ) {
+		global $wpdb;
+		$table = self::get_db_table( $type );
+		$hash = $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ), 256 ) FROM `{$table}` ORDER BY `hash` ASC" );
+		return hash_equals( $sha256_checksum, $hash );
+	}
+
+	/**
 	 * Generic php code.  Better to use `wp_remote_get()` if available.
 	 */
 	public function query_uri( $uri ) {
