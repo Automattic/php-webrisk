@@ -15,6 +15,56 @@ class Google_Webrisk {
 		return $this;
 	}
 
+	public static function get_db_table( $type = 0 ) {
+		switch ( $type ) {
+			case 0:
+			case 'vp_webrisk_0':
+			case 'THREAT_TYPE_UNSPECIFIED':
+				return 'vp_webrisk_0';
+				break;
+			case 1:
+			case 'vp_webrisk_1':
+			case 'MALWARE':
+				return 'vp_webrisk_1';
+				break;
+			case 2:
+			case 'vp_webrisk_2':
+			case 'SOCIAL_ENGINEERING':
+				return 'vp_webrisk_2';
+				break;
+			case 3:
+			case 'vp_webrisk_3':
+			case 'UNWANTED_SOFTWARE':
+				return 'vp_webrisk_3';
+				break;
+		}
+	}
+
+	public static function get_threat_type( $type = 0 ) {
+		switch ( $type ) {
+			case 0:
+			case 'vp_webrisk_0':
+			case 'THREAT_TYPE_UNSPECIFIED':
+				return 'THREAT_TYPE_UNSPECIFIED';
+				break;
+			case 1:
+			case 'vp_webrisk_1':
+			case 'MALWARE':
+				return 'MALWARE';
+				break;
+			case 2:
+			case 'vp_webrisk_2':
+			case 'SOCIAL_ENGINEERING':
+				return 'SOCIAL_ENGINEERING';
+				break;
+			case 3:
+			case 'vp_webrisk_3':
+			case 'UNWANTED_SOFTWARE':
+				return 'UNWANTED_SOFTWARE';
+				break;
+		}
+	}
+
 	// https://dbdiagram.io/d/5dd415caedf08a25543e1d90
 	private static function clear_db() {
 		$sql = ( 'TRUNCATE `webrisk`' );
