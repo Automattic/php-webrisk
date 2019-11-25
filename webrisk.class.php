@@ -95,12 +95,12 @@ class Google_Webrisk {
 	 * Build a url to query the api.  Includes all get query args passed in, as well
 	 * as automatically adding the api key for all requests.
 	 */
-	public function get_api_uri( $type = '', $query_args = array() ) {
-		switch( $type ) {
+	public function get_api_uri( $endpoint = '', $query_args = array() ) {
+		switch( $endpoint ) {
 			case 'hashes:search':
 			case 'threatLists:computeDiff':
 			case 'uris:search':
-				$url = self::DOMAIN . '/' . self::VERSION . '/' . $type . '?key=' . $this->apikey;
+				$url = self::DOMAIN . '/' . self::VERSION . '/' . $endpoint . '?key=' . $this->apikey;
 				break;
 			default:
 				$url = null;
