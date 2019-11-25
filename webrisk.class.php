@@ -128,9 +128,10 @@ class Google_Webrisk {
 
 		if ( 'RESET' === $json->responseType ) {
 			// It's a reset.  Ditch all entries and replace.
-			echo "Found " . sizeof( $prefixes ) . " prefixes.\r\n";
+			self::clear_db( $type );
 		} elseif ( 'DIFF' === $json->responseType ) {
-			// It's a diff.  Add some in, delete others.
+			$indices = $json->removals->rawIndices->indices;
+			self::delete_prefixes( $type, $indices );
 		}
 
 		$hashes = $json->additions->rawHashes;
