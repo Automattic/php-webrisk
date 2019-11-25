@@ -128,18 +128,20 @@ class Google_Webrisk {
 
 		if ( 'RESET' === $json->responseType ) {
 			// It's a reset.  Ditch all entries and replace.
-			$hashes = $json->additions->rawHashes;
-			$prefixes = array();
-			foreach ( $hashes as $hash_additions ) {
-				$new_prefixes = str_split(
-					bin2hex( base64_decode( $hash_additions->rawHashes ) ),
-					2 * $hash_additions->prefixSize
-				);
-				$prefixes = array_merge( $prefixes, $new_prefixes );
-			}
 			echo "Found " . sizeof( $prefixes ) . " prefixes.\r\n";
 		} elseif ( 'DIFF' === $json->responseType ) {
 			// It's a diff.  Add some in, delete others.
+		}
+
+		$hashes = $json->additions->rawHashes;
+		$prefixes = array();
+		foreach ( $hashes as $hash_additions ) {
+			echo "h1 " . hash( 'sha256', base64_decode( $hash_additions->rawHashes ) ) . "\r\n";
+			$new_prefixes = str_split(
+				bin2hex( base64_decode( $hash_additions->rawHashes ) ),
+				2 * $hash_additions->prefixSize
+			);
+			$prefixes = array_merge( $prefixes, $new_prefixes );
 		}
 
 		self::store_prefixes( $type, $prefixes );
