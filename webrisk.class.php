@@ -5,11 +5,6 @@ class Google_Webrisk {
 	const DOMAIN = 'https://webrisk.googleapis.com';
 	const VERSION = 'v1beta1';
 
-	/**
-	 *
-	 */
-	const HASH_PREFIX_LENGTH = 4;
-
 	var $apikey;
 	var $nextDiff;
 	var $versionToken;
@@ -69,8 +64,6 @@ class Google_Webrisk {
 	}
 
 	public function update_hashes( $since = null ) {
-		$length = 4; // prefix length
-
 		$url = self::get_api_uri( 'threatLists:computeDiff', array(
 			'threatType' => 'MALWARE',
 			'versionToken' => $this->version_token,
