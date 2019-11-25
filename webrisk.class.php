@@ -117,9 +117,9 @@ class Google_Webrisk {
 		return $url;
 	}
 
-	public function update_hashes( $since = null ) {
+	public function update_hashes( $type = 'MALWARE' ) {
 		$url = self::get_api_uri( 'threatLists:computeDiff', array(
-			'threatType' => 'MALWARE',
+			'threatType' => self::get_threat_type( $type ),
 			'versionToken' => $this->version_token,
 		) );
 
