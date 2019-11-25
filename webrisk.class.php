@@ -107,7 +107,7 @@ class Google_Webrisk {
 		}
 
 		// If we're passing any params in, append them here.
-		if ( $url && sizeof( $query_args ) ) {
+		if ( $url && is_array( $query_args ) &&sizeof( $query_args ) ) {
 			/**
 			 * Generic php code.  Better to use `add_query_arg()` if available.
 			 */
