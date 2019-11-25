@@ -6,8 +6,6 @@ class Google_Webrisk {
 	const VERSION = 'v1beta1';
 
 	var $apikey;
-	var $nextDiff;
-	var $versionToken;
 
 	public function __construct( $apikey ) {
 		$this->apikey = $apikey;
