@@ -153,7 +153,10 @@ class Google_Webrisk {
 		// $json->recommendedNextDiff;
 		// $json->newVersionToken;
 
-	//	var_dump( $json );
+		$checksum_sha256 = bin2hex( base64_decode( $json->checksum->sha256 ) );
+		if ( ! self::checksum( $type, $checksum_sha256 ) ) {
+			echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
+		}
 
 		return $prefixes;
 	}
@@ -164,6 +167,9 @@ class Google_Webrisk {
 	 */
 	public function checksum( $type, $sha256_checksum ) {
 		global $wpdb;
+		if ( empty( $wpdb ) ) {
+			return null; // if we're not in a wp environment.
+		}
 		$table = self::get_db_table( $type );
 		$hash = $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ), 256 ) FROM `{$table}` ORDER BY `hash` ASC" );
 		return hash_equals( $sha256_checksum, $hash );
