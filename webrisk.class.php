@@ -65,9 +65,10 @@ class Google_Webrisk {
 
 	// https://dbdiagram.io/d/5dd415caedf08a25543e1d90
 	private static function clear_db( $type ) {
+		global $wpdb;
 		$table = self::get_db_table( $type );
 		$sql = "TRUNCATE `{$table}`";
-		// echo $sql;
+		$wpdb->query( $sql );
 	}
 
 	private static function delete_prefixes( $type, $prefix_indices ) {
@@ -81,13 +82,14 @@ class Google_Webrisk {
 	}
 
 	private static function store_prefixes( $type, $hash_prefixes ) {
-		$table = self::get_db_table();
+		global $wpdb;
+		$table = self::get_db_table( $type );
 		$chunk_size = 500;
 		while ( sizeof( $hash_prefixes ) ) {
 			$insert_batch = array_splice( $hash_prefixes, 0, $chunk_size );
 			$imploded = "'" . implode( "', '", $insert_batch ) . "'";
 			$sql = "INSERT INTO `{$table}` (`hash`) VALUES ( {$imploded} )";
-			// echo $sql;
+			$wpdb->query( $sql );
 		}
 	}
 
