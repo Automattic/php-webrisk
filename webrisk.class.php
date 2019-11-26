@@ -78,7 +78,7 @@ class Google_Webrisk {
 			FROM	`{$table}`
 			WHERE	indices IN ( " . implode( ', ', array_map( 'intval', $prefix_indices ) ) . " ) ";
 		// todo: write a delete statement with this as a nested query?
-		// echo $sql;
+		echo "\r\n\r\n" . $sql . "\r\n";
 	}
 
 	private static function store_prefixes( $type, $hash_prefixes ) {
