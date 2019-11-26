@@ -158,7 +158,7 @@ class Google_Webrisk {
 			echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
 		}
 
-		return $prefixes;
+		return true;
 	}
 
 	/**
