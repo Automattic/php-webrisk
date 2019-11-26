@@ -87,8 +87,8 @@ class Google_Webrisk {
 		$chunk_size = 500;
 		while ( sizeof( $hash_prefixes ) ) {
 			$insert_batch = array_splice( $hash_prefixes, 0, $chunk_size );
-			$imploded = "'" . implode( "', '", $insert_batch ) . "'";
-			$sql = "INSERT INTO `{$table}` (`hash`) VALUES ( {$imploded} )";
+			$imploded = "'" . implode( "'), ('", $insert_batch ) . "'";
+			$sql = "INSERT INTO `{$table}` (`hash`) VALUES ({$imploded})";
 			$wpdb->query( $sql );
 		}
 	}
