@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'GOOGLE_WEBRISK_DEBUG' ) ) {
+	define( 'GOOGLE_WEBRISK_DEBUG', false );
+}
+
 class Google_Webrisk {
 
 	const DOMAIN = 'https://webrisk.googleapis.com';
@@ -78,7 +82,10 @@ class Google_Webrisk {
 			FROM	`{$table}`
 			WHERE	indices IN ( " . implode( ', ', array_map( 'intval', $prefix_indices ) ) . " ) ";
 		// todo: write a delete statement with this as a nested query?
-		echo "\r\n\r\n" . $sql . "\r\n";
+
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo "\r\n\r\n" . $sql . "\r\n";
+		}
 	}
 
 	private static function store_prefixes( $type, $hash_prefixes ) {
@@ -145,8 +152,23 @@ class Google_Webrisk {
 			);
 			$prefixes = array_merge( $prefixes, $new_prefixes );
 		}
+		self::store_prefixes( $table, $prefixes );
 
-		self::store_prefixes( $type, $prefixes );
+		$expected_checksum = bin2hex( base64_decode( $json->checksum->sha256 ) );
+		$actual_checksum   = self::get_checksum( $table );
+		if ( $expected_checksum !== $actual_checksum ) {
+			if ( GOOGLE_WEBRISK_DEBUG ) {
+				echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
+				echo "Expected: {$expected_checksum}\r\n";
+				echo "Actual:   {$actual_checksum}\r\n";
+			}
+			return false;
+		} else {
+			if ( GOOGLE_WEBRISK_DEBUG ) {
+				echo "Checksums match.  Woot!\r\n";
+			}
+		}
+
 
 		// store these
 		// $json->recommendedNextDiff;
