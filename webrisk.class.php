@@ -187,6 +187,9 @@ class Google_Webrisk {
 		return true;
 	}
 
+	/**
+	 * Verifies the saved checksum in an option against the calculated checksum.
+	 */
 	public function verify_checksum( $type ) {
 		$threat_type = self::get_threat_type( $type );
 
@@ -196,6 +199,9 @@ class Google_Webrisk {
 		return $expected_checksum === $actual_checksum;
 	}
 
+	/**
+	 * Calculates the checksum from the db.
+	 */
 	public function get_checksum( $type ) {
 		global $wpdb;
 		$table = self::get_db_table( $type );
