@@ -98,6 +98,11 @@ class Google_Webrisk {
 		global $wpdb;
 		$table = self::get_db_table( $type );
 		$chunk_size = 500;
+
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo "Inserting a total of " . sizeof( $hash_prefixes ) . " hashes into `{$table}` in {$chunk_size} unit chunks…\r\n";
+		}
+
 		while ( sizeof( $hash_prefixes ) ) {
 			$insert_batch = array_splice( $hash_prefixes, 0, $chunk_size );
 			$imploded = "'" . implode( "'), ('", $insert_batch ) . "'";
