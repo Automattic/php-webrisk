@@ -72,6 +72,12 @@ class Google_Webrisk {
 		global $wpdb;
 		$table = self::get_db_table( $type );
 		$sql = "TRUNCATE `{$table}`";
+
+
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo "Truncating table `{$table}`…\r\n";
+		}
+
 		$wpdb->query( $sql );
 	}
 
@@ -96,11 +102,20 @@ class Google_Webrisk {
 			$insert_batch = array_splice( $hash_prefixes, 0, $chunk_size );
 			$imploded = "'" . implode( "'), ('", $insert_batch ) . "'";
 			$sql = "INSERT INTO `{$table}` (`hash`) VALUES ({$imploded})";
+
+			if ( GOOGLE_WEBRISK_DEBUG ) {
+				echo "Inserting " . sizeof( $insert_batch ) . " hashes into `{$table}` beginning with {$insert_batch[0]}…\r\n";
+			}
+
 			$wpdb->query( $sql );
 		}
 	}
 
 	private static function set_option( $option, $value ) {
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo "Setting option '{$option}' to '{$value}'…\r\n";
+		}
+
 		return vp_set_cfg( $option, $value );
 	}
 
@@ -131,6 +146,10 @@ class Google_Webrisk {
 			$url .= '&' . http_build_query( $query_args );
 		}
 
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo "Built API URL: {$url}\r\n";
+		}
+
 		return $url;
 	}
 
@@ -145,6 +164,10 @@ class Google_Webrisk {
 
 		$response = self::query_uri( $url );
 		$json = json_decode( $response );
+
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo "Response Type: {$json->responseType}\r\n";
+		}
 
 		if ( 'RESET' === $json->responseType ) {
 			// It's a reset.  Ditch all entries and replace.
