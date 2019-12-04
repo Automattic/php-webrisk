@@ -135,9 +135,12 @@ class Google_Webrisk {
 	}
 
 	public function update_hashes( $type ) {
+		$threat_type = self::get_threat_type( $type );
+		$table       = self::get_db_table( $type );
+
 		$url = self::get_api_uri( 'threatLists:computeDiff', array(
-			'threatType' => self::get_threat_type( $type ),
-			// 'versionToken' => $this->version_token,
+			'threatType'   => $threat_type,
+			'versionToken' => self::get_option( "webrisk_{$threat_type}_version_token" ),
 		) );
 
 		$response = self::query_uri( $url );
@@ -145,10 +148,10 @@ class Google_Webrisk {
 
 		if ( 'RESET' === $json->responseType ) {
 			// It's a reset.  Ditch all entries and replace.
-			self::clear_db( $type );
+			self::clear_db( $table );
 		} elseif ( 'DIFF' === $json->responseType ) {
 			$indices = $json->removals->rawIndices->indices;
-			self::delete_prefixes( $type, $indices );
+			self::delete_prefixes( $table, $indices );
 		}
 
 		$hashes = $json->additions->rawHashes;
@@ -181,14 +184,9 @@ class Google_Webrisk {
 		self::set_option( "webrisk_{$threat_type}_version_token", $json->newVersionToken );
 		self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
 
-		// store these
-		// $json->recommendedNextDiff;
-		// $json->newVersionToken;
+		return true;
+	}
 
-		$checksum_sha256 = bin2hex( base64_decode( $json->checksum->sha256 ) );
-		if ( ! self::checksum( $type, $checksum_sha256 ) ) {
-			echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
-		}
 	public function verify_checksum( $type ) {
 		$threat_type = self::get_threat_type( $type );
 
