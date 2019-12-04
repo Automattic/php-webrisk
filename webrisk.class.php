@@ -100,6 +100,14 @@ class Google_Webrisk {
 		}
 	}
 
+	private static function set_option( $option, $value ) {
+		return vp_set_cfg( $option, $value );
+	}
+
+	private static function get_option( $option ) {
+		return vp_get_cfg( $option );
+	}
+
 	/**
 	 * Build a url to query the api.  Includes all get query args passed in, as well
 	 * as automatically adding the api key for all requests.
@@ -169,6 +177,9 @@ class Google_Webrisk {
 			}
 		}
 
+		self::set_option( "webrisk_{$threat_type}_next_diff", $json->recommendedNextDiff );
+		self::set_option( "webrisk_{$threat_type}_version_token", $json->newVersionToken );
+		self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
 
 		// store these
 		// $json->recommendedNextDiff;
