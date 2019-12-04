@@ -67,7 +67,6 @@ class Google_Webrisk {
 		}
 	}
 
-	// https://dbdiagram.io/d/5dd415caedf08a25543e1d90
 	private static function clear_db( $type ) {
 		global $wpdb;
 		$table = self::get_db_table( $type );
