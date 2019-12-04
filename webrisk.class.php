@@ -189,22 +189,19 @@ class Google_Webrisk {
 		if ( ! self::checksum( $type, $checksum_sha256 ) ) {
 			echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
 		}
+	public function verify_checksum( $type ) {
+		$threat_type = self::get_threat_type( $type );
 
-		return true;
+		$expected_checksum = self::get_option( "webrisk_{$threat_type}_checksum" );
+		$actual_checksum   = self::get_checksum( $type );
+
+		return $expected_checksum === $actual_checksum;
 	}
 
-	/**
-	 * Check the sums.  Probably can just use `===` instead of `hash_equals()`
-	 * as it's not a timing attack concern.
-	 */
-	public function checksum( $type, $sha256_checksum ) {
+	public function get_checksum( $type ) {
 		global $wpdb;
-		if ( empty( $wpdb ) ) {
-			return null; // if we're not in a wp environment.
-		}
 		$table = self::get_db_table( $type );
-		$hash = $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ), 256 ) FROM `{$table}` ORDER BY `hash` ASC" );
-		return hash_equals( $sha256_checksum, $hash );
+		return $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ), 256 ) FROM `{$table}` ORDER BY `hash` ASC" );
 	}
 
 	/**
