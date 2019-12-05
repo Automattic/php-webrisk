@@ -232,6 +232,11 @@ class Google_Webrisk {
 	public function get_checksum( $type ) {
 		global $wpdb;
 		$table = self::get_db_table( $type );
+
+		if ( method_exists( $wpdb, 'send_reads_to_master' ) ) {
+			$wpdb->send_reads_to_master();
+		}
+
 		$wpdb->query( "SET SESSION group_concat_max_len = 8 * ( SELECT COUNT(*) FROM `{$table}` )" );
 		return $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ), 256 ) FROM `{$table}`" );
 	}
