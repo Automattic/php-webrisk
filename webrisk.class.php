@@ -233,8 +233,8 @@ class Google_Webrisk {
 		global $wpdb;
 		$table = self::get_db_table( $type );
 
-		if ( method_exists( $wpdb, 'send_reads_to_master' ) ) {
-			$wpdb->send_reads_to_master();
+		if ( method_exists( $wpdb, 'send_reads_to_masters' ) ) {
+			$wpdb->send_reads_to_masters();
 		}
 
 		$wpdb->query( "SET SESSION group_concat_max_len = 8 * ( SELECT COUNT(*) FROM `{$table}` )" );
