@@ -18,52 +18,26 @@ class Google_Webrisk {
 	}
 
 	public static function get_db_table( $type = 0 ) {
-		switch ( $type ) {
-			case 0:
-			case 'vp_webrisk_0':
-			case 'THREAT_TYPE_UNSPECIFIED':
-				return 'vp_webrisk_0';
-				break;
-			case 1:
-			case 'vp_webrisk_1':
-			case 'MALWARE':
-				return 'vp_webrisk_1';
-				break;
-			case 2:
-			case 'vp_webrisk_2':
-			case 'SOCIAL_ENGINEERING':
-				return 'vp_webrisk_2';
-				break;
-			case 3:
-			case 'vp_webrisk_3':
-			case 'UNWANTED_SOFTWARE':
-				return 'vp_webrisk_3';
-				break;
+		if ( in_array( $type, array( 0, '0', 'vp_webrisk_0', 'THREAT_TYPE_UNSPECIFIED' ), true ) ) {
+			return 'vp_webrisk_0';
+		} elseif ( in_array( $type, array( 1, '1', 'vp_webrisk_1', 'MALWARE' ), true ) ) {
+			return 'vp_webrisk_1';
+		} elseif ( in_array( $type, array( 2, '2', 'vp_webrisk_2', 'SOCIAL_ENGINEERING' ), true ) ) {
+			return 'vp_webrisk_2';
+		} elseif ( in_array( $type, array( 3, '3', 'vp_webrisk_3', 'UNWANTED_SOFTWARE' ), true ) ) {
+			return 'vp_webrisk_3';
 		}
 	}
 
 	public static function get_threat_type( $type = 0 ) {
-		switch ( $type ) {
-			case 0:
-			case 'vp_webrisk_0':
-			case 'THREAT_TYPE_UNSPECIFIED':
-				return 'THREAT_TYPE_UNSPECIFIED';
-				break;
-			case 1:
-			case 'vp_webrisk_1':
-			case 'MALWARE':
-				return 'MALWARE';
-				break;
-			case 2:
-			case 'vp_webrisk_2':
-			case 'SOCIAL_ENGINEERING':
-				return 'SOCIAL_ENGINEERING';
-				break;
-			case 3:
-			case 'vp_webrisk_3':
-			case 'UNWANTED_SOFTWARE':
-				return 'UNWANTED_SOFTWARE';
-				break;
+		if ( in_array( $type, array( 0, '0', 'vp_webrisk_0', 'THREAT_TYPE_UNSPECIFIED' ), true ) ) {
+			return 'THREAT_TYPE_UNSPECIFIED';
+		} elseif ( in_array( $type, array( 1, '1', 'vp_webrisk_1', 'MALWARE' ), true ) ) {
+			return 'MALWARE';
+		} elseif ( in_array( $type, array( 2, '2', 'vp_webrisk_2', 'SOCIAL_ENGINEERING' ), true ) ) {
+			return 'SOCIAL_ENGINEERING';
+		} elseif ( in_array( $type, array( 3, '3', 'vp_webrisk_3', 'UNWANTED_SOFTWARE' ), true ) ) {
+			return 'UNWANTED_SOFTWARE';
 		}
 	}
 
