@@ -157,6 +157,10 @@ class Google_Webrisk {
 		$hashes = $json->additions->rawHashes;
 		$prefixes = array();
 		foreach ( $hashes as $hash_additions ) {
+			if ( GOOGLE_WEBRISK_DEBUG ) {
+				echo "Prefixes:\r\n" . bin2hex( base64_decode( $hash_additions->rawHashes ) ) . "\r\n";
+			}
+
 			$new_prefixes = str_split(
 				bin2hex( base64_decode( $hash_additions->rawHashes ) ),
 				2 * $hash_additions->prefixSize
