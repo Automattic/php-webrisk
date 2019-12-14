@@ -46,7 +46,6 @@ class Google_Webrisk {
 		$table = self::get_db_table( $type );
 		$sql = "TRUNCATE `{$table}`";
 
-
 		if ( GOOGLE_WEBRISK_DEBUG ) {
 			echo "Truncating table `{$table}`…\r\n";
 		}
@@ -166,6 +165,10 @@ class Google_Webrisk {
 		}
 		self::store_prefixes( $table, $prefixes );
 
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo "base64 checksum: {$json->checksum->sha256}\r\n";
+		}
+
 		$expected_checksum = bin2hex( base64_decode( $json->checksum->sha256 ) );
 		$actual_checksum   = self::get_checksum( $table );
 		if ( $expected_checksum !== $actual_checksum ) {
@@ -174,6 +177,7 @@ class Google_Webrisk {
 				echo "Expected: {$expected_checksum}\r\n";
 				echo "Actual:   {$actual_checksum}\r\n";
 			}
+			self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
 			return false;
 		} else {
 			if ( GOOGLE_WEBRISK_DEBUG ) {
@@ -192,10 +196,18 @@ class Google_Webrisk {
 	 * Verifies the saved checksum in an option against the calculated checksum.
 	 */
 	public function verify_checksum( $type ) {
-		$threat_type = self::get_threat_type( $type );
-
-		$expected_checksum = self::get_option( "webrisk_{$threat_type}_checksum" );
+		$expected_checksum = self::get_checksum_option( $type );
 		$actual_checksum   = self::get_checksum( $type );
+
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			if ( $expected_checksum === $actual_checksum ) {
+				echo "Checksums match.  Woot!\r\n";
+			} else {
+				echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
+				echo "Option:     {$expected_checksum}\r\n";
+				echo "Calculated: {$actual_checksum}\r\n";
+			}
+		}
 
 		return $expected_checksum === $actual_checksum;
 	}
@@ -208,11 +220,25 @@ class Google_Webrisk {
 		$table = self::get_db_table( $type );
 
 		if ( method_exists( $wpdb, 'send_reads_to_masters' ) ) {
+			if ( GOOGLE_WEBRISK_DEBUG ) {
+				echo "Setting reads to masters…\r\n";
+			}
 			$wpdb->send_reads_to_masters();
 		}
 
 		$wpdb->query( "SET SESSION group_concat_max_len = 8 * ( SELECT COUNT(*) FROM `{$table}` )" );
+
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			$length = $wpdb->get_var( "SELECT LENGTH( GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ) ) FROM `{$table}`" );
+			echo "Calculated concat length: {$length}\r\n";
+		}
+
 		return $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ), 256 ) FROM `{$table}`" );
+	}
+
+	public function get_checksum_option( $type ) {
+		$threat_type = self::get_threat_type( $type );
+		return self::get_option( "webrisk_{$threat_type}_checksum" );
 	}
 
 	/**
