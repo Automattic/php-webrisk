@@ -223,7 +223,7 @@ class Google_Webrisk {
 			self::debug( "Calculated concat length: {$length}" );
 		}
 
-		return $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ), 256 ) FROM `{$table}`" );
+		return $wpdb->get_var( "SELECT SHA2( UNHEX( GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ) ), 256 ) FROM `{$table}`" );
 	}
 
 	public function get_checksum_option( $type ) {
