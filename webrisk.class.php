@@ -231,6 +231,20 @@ class Google_Webrisk {
 		return self::get_option( "webrisk_{$threat_type}_checksum" );
 	}
 
+	public function get_concat_prefixes( $type ) {
+		global $wpdb;
+		$table = self::get_db_table( $type );
+
+		if ( method_exists( $wpdb, 'send_reads_to_masters' ) ) {
+			self::debug( "Setting reads to masters…" );
+			$wpdb->send_reads_to_masters();
+		}
+
+		$wpdb->query( "SET SESSION group_concat_max_len = 8 * ( SELECT COUNT(*) FROM `{$table}` )" );
+
+		return $wpdb->get_var( "SELECT GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ) FROM `{$table}`" );
+	}
+
 	/**
 	 * Generic php code.  Better to use `wp_remote_get()` if available.
 	 */
