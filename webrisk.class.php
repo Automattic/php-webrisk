@@ -136,6 +136,12 @@ class Google_Webrisk {
 		$response = self::query_uri( $url );
 		$json = json_decode( $response );
 
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			$outfile = tempnam( sys_get_temp_dir(), "{$threat_type}-{$json->responseType}.txt" );
+			file_put_contents( $outfile, $response );
+			self::debug( "API Response stashed in {$outfile}" );
+		}
+
 		self::debug( "Response Type: {$json->responseType}" );
 
 		if ( 'RESET' === $json->responseType ) {
