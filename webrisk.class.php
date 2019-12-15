@@ -17,6 +17,12 @@ class Google_Webrisk {
 		return $this;
 	}
 
+	public static function debug( $message ) {
+		if ( GOOGLE_WEBRISK_DEBUG ) {
+			echo rtrim( $message ) . "\r\n";
+		}
+	}
+
 	public static function get_db_table( $type = 0 ) {
 		if ( in_array( $type, array( 0, '0', 'vp_webrisk_0', 'THREAT_TYPE_UNSPECIFIED' ), true ) ) {
 			return 'vp_webrisk_0';
@@ -46,9 +52,7 @@ class Google_Webrisk {
 		$table = self::get_db_table( $type );
 		$sql = "TRUNCATE `{$table}`";
 
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			echo "Truncating table `{$table}`…\r\n";
-		}
+		self::debug( "Truncating table `{$table}`…" );
 
 		$wpdb->query( $sql );
 	}
@@ -61,9 +65,7 @@ class Google_Webrisk {
 			WHERE	indices IN ( " . implode( ', ', array_map( 'intval', $prefix_indices ) ) . " ) ";
 		// todo: write a delete statement with this as a nested query?
 
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			echo "\r\n\r\n" . $sql . "\r\n";
-		}
+		self::debug( "\r\n\r\n" . $sql );
 	}
 
 	private static function store_prefixes( $type, $hash_prefixes ) {
@@ -71,27 +73,21 @@ class Google_Webrisk {
 		$table = self::get_db_table( $type );
 		$chunk_size = 500;
 
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			echo "Inserting a total of " . sizeof( $hash_prefixes ) . " hashes into `{$table}` in {$chunk_size} unit chunks…\r\n";
-		}
+		self::debug(  "Inserting a total of " . sizeof( $hash_prefixes ) . " hashes into `{$table}` in {$chunk_size} unit chunks…" );
 
 		while ( sizeof( $hash_prefixes ) ) {
 			$insert_batch = array_splice( $hash_prefixes, 0, $chunk_size );
 			$imploded = "'" . implode( "'), ('", $insert_batch ) . "'";
 			$sql = "INSERT INTO `{$table}` (`hash`) VALUES ({$imploded})";
 
-			if ( GOOGLE_WEBRISK_DEBUG ) {
-				echo "Inserting " . sizeof( $insert_batch ) . " hashes into `{$table}` beginning with {$insert_batch[0]}…\r\n";
-			}
+			self::debug(  "Inserting " . sizeof( $insert_batch ) . " hashes into `{$table}` beginning with {$insert_batch[0]}…" );
 
 			$wpdb->query( $sql );
 		}
 	}
 
 	private static function set_option( $option, $value ) {
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			echo "Setting option '{$option}' to '{$value}'…\r\n";
-		}
+		self::debug(  "Setting option '{$option}' to '{$value}'…" );
 
 		return vp_set_cfg( $option, $value );
 	}
@@ -123,9 +119,7 @@ class Google_Webrisk {
 			$url .= '&' . http_build_query( $query_args );
 		}
 
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			echo "Built API URL: {$url}\r\n";
-		}
+		self::debug( "Built API URL: {$url}" );
 
 		return $url;
 	}
@@ -142,9 +136,7 @@ class Google_Webrisk {
 		$response = self::query_uri( $url );
 		$json = json_decode( $response );
 
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			echo "Response Type: {$json->responseType}\r\n";
-		}
+		self::debug( "Response Type: {$json->responseType}" );
 
 		if ( 'RESET' === $json->responseType ) {
 			// It's a reset.  Ditch all entries and replace.
@@ -157,9 +149,7 @@ class Google_Webrisk {
 		$hashes = $json->additions->rawHashes;
 		$prefixes = array();
 		foreach ( $hashes as $hash_additions ) {
-			if ( GOOGLE_WEBRISK_DEBUG ) {
-				echo "Prefixes:\r\n" . bin2hex( base64_decode( $hash_additions->rawHashes ) ) . "\r\n";
-			}
+			self::debug( "Prefixes:\r\n" . bin2hex( base64_decode( $hash_additions->rawHashes ) ) );
 
 			$new_prefixes = str_split(
 				bin2hex( base64_decode( $hash_additions->rawHashes ) ),
@@ -169,24 +159,18 @@ class Google_Webrisk {
 		}
 		self::store_prefixes( $table, $prefixes );
 
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			echo "base64 checksum: {$json->checksum->sha256}\r\n";
-		}
+		self::debug( "base64 checksum: {$json->checksum->sha256}" );
 
 		$expected_checksum = bin2hex( base64_decode( $json->checksum->sha256 ) );
 		$actual_checksum   = self::get_checksum( $table );
 		if ( $expected_checksum !== $actual_checksum ) {
-			if ( GOOGLE_WEBRISK_DEBUG ) {
-				echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
-				echo "Expected: {$expected_checksum}\r\n";
-				echo "Actual:   {$actual_checksum}\r\n";
-			}
+			self::debug( "\r\nERROR! CHECKSUM MISMATCH!" );
+			self::debug( "Expected: {$expected_checksum}" );
+			self::debug( "Actual:   {$actual_checksum}" );
 			self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
 			return false;
 		} else {
-			if ( GOOGLE_WEBRISK_DEBUG ) {
-				echo "Checksums match.  Woot!\r\n";
-			}
+			self::debug( "Checksums match.  Woot!" );
 		}
 
 		self::set_option( "webrisk_{$threat_type}_next_diff", $json->recommendedNextDiff );
@@ -203,14 +187,12 @@ class Google_Webrisk {
 		$expected_checksum = self::get_checksum_option( $type );
 		$actual_checksum   = self::get_checksum( $type );
 
-		if ( GOOGLE_WEBRISK_DEBUG ) {
-			if ( $expected_checksum === $actual_checksum ) {
-				echo "Checksums match.  Woot!\r\n";
-			} else {
-				echo "\r\nERROR! CHECKSUM MISMATCH!\r\n";
-				echo "Option:     {$expected_checksum}\r\n";
-				echo "Calculated: {$actual_checksum}\r\n";
-			}
+		if ( $expected_checksum === $actual_checksum ) {
+			self::debug( "Checksums match.  Woot!" );
+		} else {
+			self::debug( "\r\nERROR! CHECKSUM MISMATCH!" );
+			self::debug( "Option:     {$expected_checksum}" );
+			self::debug( "Calculated: {$actual_checksum}" );
 		}
 
 		return $expected_checksum === $actual_checksum;
@@ -224,9 +206,7 @@ class Google_Webrisk {
 		$table = self::get_db_table( $type );
 
 		if ( method_exists( $wpdb, 'send_reads_to_masters' ) ) {
-			if ( GOOGLE_WEBRISK_DEBUG ) {
-				echo "Setting reads to masters…\r\n";
-			}
+			self::debug( "Setting reads to masters…" );
 			$wpdb->send_reads_to_masters();
 		}
 
@@ -234,7 +214,7 @@ class Google_Webrisk {
 
 		if ( GOOGLE_WEBRISK_DEBUG ) {
 			$length = $wpdb->get_var( "SELECT LENGTH( GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ) ) FROM `{$table}`" );
-			echo "Calculated concat length: {$length}\r\n";
+			self::debug( "Calculated concat length: {$length}" );
 		}
 
 		return $wpdb->get_var( "SELECT SHA2( GROUP_CONCAT( `hash` ORDER BY `hash` ASC SEPARATOR '' ), 256 ) FROM `{$table}`" );
