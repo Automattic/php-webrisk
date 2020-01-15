@@ -377,13 +377,17 @@ class Google_Webrisk {
 			$parsed_uri['path'] = $path;
 		}
 
+		if ( empty( $parsed_uri['path'] ) ) {
+			$parsed_uri['path'] = '/';
+		}
+
 		// Do not apply these path canonicalizations to the query parameters.
 
 		// Reassemble.
 		// Modified from https://stackoverflow.com/posts/35207936/revisions
 		$uri = ( isset( $parsed_uri['scheme'] ) ? "{$parsed_uri['scheme']}:" : '' ) . '//' .
 			( isset( $parsed_uri['host'] )   ? "{$parsed_uri['host']}"   : '' ) .
-			( ! empty( $parsed_uri['path'] ) ? "{$parsed_uri['path']}"   : '/' ) .
+			( $parsed_uri['path'] ) .
 			( isset( $parsed_uri['query'] )  ? "?{$parsed_uri['query']}" : '' );
 
 		// In the URL, percent-escape all characters that are <= ASCII 32, >= 127, #, or %. The escapes should use uppercase hex characters.
@@ -428,11 +432,6 @@ class Google_Webrisk {
 
 		// For the path, the client will try at most six different strings. They are:
 		$path_variations = array();
-
-		// George Addition: If path is empty, set it to `/`
-		if ( empty( $uri['path'] ) ) {
-			$uri['path'] = '/';
-		}
 
 		// The exact path of the URL, including query parameters.
 		$path_variations[] = $uri['path'] . ( isset( $uri['query'] ) ? "?{$uri['query']}" : '' );
