@@ -58,14 +58,26 @@ class Google_Webrisk {
 	}
 
 	private static function delete_prefixes( $type, $prefix_indices ) {
+		global $wpdb;
 		$table = self::get_db_table( $type );
-		$sql = "SELECT  `hash`,
-				ROW_NUMBER() OVER ( ORDER BY `hash` ) indices,
-			FROM	`{$table}`
-			WHERE	indices IN ( " . implode( ', ', array_map( 'intval', $prefix_indices ) ) . " ) ";
-		// todo: write a delete statement with this as a nested query?
 
-		self::debug( "\r\n\r\n" . $sql );
+		$hashes = array();
+		foreach ( $prefix_indices as $index ) {
+			$index = (int) $index;
+			$sql = "SELECT  `hash`
+					FROM	`{$table}`
+					ORDER BY `hash` ASC
+					LIMIT {$index}, 1";
+			$hash = $wpdb->get_var( $sql );
+			$hashes[ $index ] = $hash;
+		}
+
+		self::debug( "Deleting " . sizeof( $hashes ) . " prefixes:\r\n" . print_r( $hashes, true ) );
+
+		$sql = "DELETE
+				FROM	`{$table}`
+				WHERE	`hash` IN ( '" . implode( '\', \'', $hashes ) . "' ) ";
+		$wpdb->query( $sql );
 	}
 
 	private static function store_prefixes( $type, $hash_prefixes ) {
