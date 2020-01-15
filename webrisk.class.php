@@ -23,6 +23,15 @@ class Google_Webrisk {
 		}
 	}
 
+	public static function reset( $type ) {
+		$threat_type = self::get_threat_type( $type );
+
+		self::set_option( "webrisk_{$threat_type}_next_diff", null );
+		self::set_option( "webrisk_{$threat_type}_version_token", null );
+		self::set_option( "webrisk_{$threat_type}_checksum", null );
+		self::clear_db( $type );
+	}
+
 	public static function get_db_table( $type = 0 ) {
 		if ( in_array( $type, array( 0, '0', 'vp_webrisk_0', 'THREAT_TYPE_UNSPECIFIED' ), true ) ) {
 			return 'vp_webrisk_0';
