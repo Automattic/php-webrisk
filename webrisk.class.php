@@ -167,7 +167,7 @@ class Google_Webrisk {
 
 		if ( 'RESET' === $json->responseType ) {
 			// It's a reset.  Ditch all entries and replace.
-			self::clear_db( $table );
+			self::reset( $table );
 		} elseif ( 'DIFF' === $json->responseType ) {
 			$indices = $json->removals->rawIndices->indices;
 			self::delete_prefixes( $table, $indices );
