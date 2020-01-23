@@ -207,6 +207,12 @@ class Google_Webrisk {
 			self::reset( $table );
 		} elseif ( 'DIFF' === $json->responseType ) {
 			$indices = $json->removals->rawIndices->indices;
+			if ( is_array( $indices ) && ( 3000 < sizeof( $indices ) ) ) {
+				self::log( sprintf( 'Aborting %s DIFF operation, too many deletions (%d). Commencing RESET operation.', $threat_type, sizeof( $indices ) ) );
+				self::reset( $type );
+				return self::update_hashes( $type );
+			}
+
 			self::delete_prefixes( $table, $indices );
 			$deleted_total += sizeof( $indices );
 		}
