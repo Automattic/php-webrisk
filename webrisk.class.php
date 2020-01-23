@@ -181,6 +181,14 @@ class Google_Webrisk {
 		$threat_type = self::get_threat_type( $type );
 		$table       = self::get_db_table( $type );
 
+		$next_diff = self::get_option( "webrisk_{$threat_type}_next_diff" );
+		$next_diff = preg_replace( '~\.(\d\d)\d+Z$~', '.\1Z', $next_diff );
+		$timestamp = strtotime( $next_diff );
+		if ( $timestamp && time() < $timestamp ) {
+			self::debug( 'You let them out again, Old Man Willow! What be you a-thinking of? You should not be waking. Eat earth! Dig deep! Drink water! Go to sleep!' );
+			return new WP_Error( 'too-soon', sprintf( 'The %s hashes are not ready to be updated yet.', $threat_type ), $timestamp );
+		}
+
 		$added_total = 0;
 		$deleted_total = 0;
 
