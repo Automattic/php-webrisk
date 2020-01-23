@@ -23,6 +23,15 @@ class Google_Webrisk {
 		}
 	}
 
+	public static function log( $message ) {
+		self::debug( $message );
+		a8c_irc( '#vaultpress-webrisk', $message, 'webrisk-bot' );
+	}
+
+	public static function stat( $value, $num = 1 ) {
+		a8c_bump_stat( 'vp-webrisk', $value, $num );
+	}
+
 	public static function reset( $type ) {
 		$threat_type = self::get_threat_type( $type );
 
@@ -172,6 +181,9 @@ class Google_Webrisk {
 		$threat_type = self::get_threat_type( $type );
 		$table       = self::get_db_table( $type );
 
+		$added_total = 0;
+		$deleted_total = 0;
+
 		$url = self::get_api_uri( 'threatLists:computeDiff', array(
 			'threatType'   => $threat_type,
 			'versionToken' => self::get_option( "webrisk_{$threat_type}_version_token" ),
@@ -186,6 +198,8 @@ class Google_Webrisk {
 			self::debug( "API Response stashed in {$outfile}" );
 		}
 
+		self::log( sprintf( 'Beginning %s %s operation.', $threat_type, $json->responseType ) );
+
 		self::debug( "Response Type: {$json->responseType}" );
 
 		if ( 'RESET' === $json->responseType ) {
@@ -194,13 +208,12 @@ class Google_Webrisk {
 		} elseif ( 'DIFF' === $json->responseType ) {
 			$indices = $json->removals->rawIndices->indices;
 			self::delete_prefixes( $table, $indices );
+			$deleted_total += sizeof( $indices );
 		}
 
 		$hashes = $json->additions->rawHashes;
 		$prefixes = array();
 		foreach ( $hashes as $hash_additions ) {
-			// self::debug( "Prefixes:\r\n" . bin2hex( base64_decode( $hash_additions->rawHashes ) ) );
-
 			$new_prefixes = str_split(
 				bin2hex( base64_decode( $hash_additions->rawHashes ) ),
 				2 * $hash_additions->prefixSize
@@ -208,6 +221,7 @@ class Google_Webrisk {
 			$prefixes = array_merge( $prefixes, $new_prefixes );
 		}
 		self::store_prefixes( $table, $prefixes );
+		$added_total += sizeof( $prefixes );
 
 		self::debug( "base64 checksum: {$json->checksum->sha256}" );
 
@@ -218,7 +232,10 @@ class Google_Webrisk {
 			self::debug( "Expected: {$expected_checksum}" );
 			self::debug( "Actual:   {$actual_checksum}" );
 			self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
-			return false;
+
+			self::log( sprintf( 'Incomplete %s %s operation. Checksum mismatch!', $threat_type, $json->responseType ) );
+			self::stat( "{$threat_type}-{$json->responseType}-checksum-fail" );
+			return new WP_Error( 'checksum-mismatch', 'The checksum calculated does not match expected.', $response );
 		} else {
 			self::debug( "Checksums match.  Woot!" );
 		}
@@ -226,6 +243,13 @@ class Google_Webrisk {
 		self::set_option( "webrisk_{$threat_type}_next_diff", $json->recommendedNextDiff );
 		self::set_option( "webrisk_{$threat_type}_version_token", $json->newVersionToken );
 		self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
+
+		self::log( sprintf( 'Completed %s %s operation. %d prefixes added, %d prefixes removed.', $threat_type, $json->responseType, $added_total, $deleted_total ) );
+		self::stat( "{$threat_type}-{$json->responseType}-success" );
+		self::stat( "{$threat_type}-{$json->responseType}-qty-add", $added_total );
+		if ( $deleted_total ) {
+			self::stat( "{$threat_type}-{$json->responseType}-qty-del", $deleted_total );
+		}
 
 		return true;
 	}
