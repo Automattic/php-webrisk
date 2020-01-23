@@ -70,6 +70,9 @@ class Google_Webrisk {
 		global $wpdb;
 		$table = self::get_db_table( $type );
 
+		$chunk_size = 300;
+		$start_time = microtime( TRUE );
+
 		$hashes = array();
 		foreach ( $prefix_indices as $index ) {
 			$index = (int) $index;
@@ -79,14 +82,34 @@ class Google_Webrisk {
 					LIMIT {$index}, 1";
 			$hash = $wpdb->get_var( $sql );
 			$hashes[ $index ] = $hash;
+
+			if ( 0 === ( sizeof( $hashes ) % $chunk_size ) ) {
+				$sleep_time = microtime( TRUE ) - $start_time;
+				self::log( sprintf( 'Batch of %d hashes fetched, sleeping for %f seconds.', $chunk_size, $sleep_time ) );
+				usleep( 1000000 * $sleep_time );
+
+				$start_time = microtime( TRUE );
+			}
 		}
 
 		self::debug( "Deleting " . sizeof( $hashes ) . " prefixes:\r\n" . print_r( $hashes, true ) );
 
-		$sql = "DELETE
-				FROM	`{$table}`
-				WHERE	`hash` IN ( '" . implode( '\', \'', $hashes ) . "' ) ";
-		$wpdb->query( $sql );
+		$hashes_chunked = array_chunk( $hashes, $chunk_size, true );
+		$start_time = microtime( TRUE );
+		foreach ( $hashes_chunked as $index => $_hashes ) {
+			$sql = "DELETE
+			FROM	`{$table}`
+			WHERE	`hash` IN ( '" . implode( '\', \'', $_hashes ) . "' ) ";
+			$wpdb->query( $sql );
+
+			if ( 9 === ( $index % 10 ) ) {
+				$sleep_time = microtime( TRUE ) - $start_time;
+				self::log( sprintf( 'Batch of %d hashes deleted, sleeping for %f seconds.', 10 * $chunk_size, $sleep_time ) );
+				usleep( 1000000 * $sleep_time );
+
+				$start_time = microtime( TRUE );
+			}
+		}
 	}
 
 	private static function store_prefixes( $type, $hash_prefixes ) {
