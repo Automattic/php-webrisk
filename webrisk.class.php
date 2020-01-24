@@ -157,19 +157,21 @@ class Google_Webrisk {
 		switch( $endpoint ) {
 			case 'hashes:search':
 			case 'threatLists:computeDiff':
-			case 'uris:search':
 				$url = self::DOMAIN . '/' . self::VERSION . '/' . $endpoint . '?key=' . $this->apikey;
+				break;
+			case 'uris:search':
+				$url = self::DOMAIN . '/' . self::VERSION . '/' . $endpoint;
 				break;
 			default:
 				$url = null;
 		}
 
 		// If we're passing any params in, append them here.
-		if ( $url && is_array( $query_args ) &&sizeof( $query_args ) ) {
+		if ( $url && is_array( $query_args ) && sizeof( $query_args ) ) {
 			/**
 			 * Generic php code.  Better to use `add_query_arg()` if available.
 			 */
-			$url .= '&' . http_build_query( $query_args );
+			$url .= ( false === strpos( $url, '?' ) ? '?' : '&' ) . http_build_query( $query_args );
 		}
 
 		self::debug( "Built API URL: {$url}" );
@@ -330,13 +332,20 @@ class Google_Webrisk {
 	/**
 	 * Generic php code.  Better to use `wp_remote_get()` if available.
 	 */
-	public function query_uri( $uri ) {
+	public function query_uri( $uri, $use_bearer_token = false ) {
 		$opts = array(
 			'http' => array(
 				'method' => 'GET',
-				'header' => 'Content-Type: application/json',
+				'header' => array(
+					'Content-Type: application/json',
+				),
 			)
 		);
+
+		if ( $use_bearer_token ) {
+			$opts['http']['header'][] = 'Authorization: Bearer ' . $this->apikey;
+		}
+
 		$context = stream_context_create( $opts );
 		return file_get_contents( $uri, false, $context );
 	}
