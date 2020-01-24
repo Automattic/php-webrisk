@@ -187,7 +187,7 @@ class Google_Webrisk {
 		$next_diff = preg_replace( '~\.(\d\d)\d+Z$~', '.\1Z', $next_diff );
 		$timestamp = strtotime( $next_diff );
 		if ( $timestamp && time() < $timestamp ) {
-			self::debug( 'You let them out again, Old Man Willow! What be you a-thinking of? You should not be waking. Eat earth! Dig deep! Drink water! Go to sleep!' );
+			self::debug( sprintf( 'You let %s out again, Old Man Willow! What be you a-thinking of? You should not be waking. Eat earth! Dig deep! Drink water! Go to sleep!', $threat_type ) );
 			return new WP_Error( 'too-soon', sprintf( 'The %s hashes are not ready to be updated yet.', $threat_type ), $timestamp );
 		}
 
