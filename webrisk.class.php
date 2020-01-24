@@ -17,6 +17,62 @@ class Google_Webrisk {
 		return $this;
 	}
 
+	/**
+	 * Returns truthy if the url is naughty.  False = a-ok!
+	 */
+	public function check_url( $url ) {
+		if ( $found = check_hash_cache( $url ) ) {
+			self::stat( 'cache-hit' );
+			// Okay so the has prefix says it's a maybe, let's confirm with Google before giving an answer.
+			$url = $this->get_api_uri( 'uris:search', array( 'url' => $url ) );
+
+			foreach ( $found as $which_list => $iffy_prefixes ) {
+				$url .= "&threatTypes={$which_list}";
+			}
+
+			$response = $this->query_uri( $url, true );
+
+			if ( '{}' !== $response ) {
+				self::stat( 'cache-hit-confirmed' );
+				$json = json_decode( $response );
+				/*
+				 * This should look something like:
+				 *
+				 *	{
+				 *		"threatTypes": [
+				 *			"MALWARE"
+				 *		],
+				 *		"expireTime": "2019-07-17T15:01:23.045123456Z"
+				 *	}
+				 */
+				return $json->threat; // purge with fire, heresy, etc
+			}
+			self::stat( 'cache-hit-false-positive' );
+			return false;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns truthy if the hash prefix was found locally.
+	 */
+	public static function check_hash_cache( $url ) {
+		global $wpdb;
+
+		$found = false;
+		$hash_prefixes = self::uri_hash_prefixes( $url );
+		$hash_placeholders = implode( ', ', array_fill( 0, sizeof( $hash_prefixes ), '%s' ) );
+		$sql = "SELECT `hash` FROM %s WHERE `hash` IN ( {$hash_placeholders} )";
+
+		$found = array(
+			'MALWARE'            => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 1 ) ], $hash_prefixes ) ) ),
+			'SOCIAL_ENGINEERING' => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 2 ) ], $hash_prefixes ) ) ),
+			'UNWANTED_SOFTWARE'  => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 3 ) ], $hash_prefixes ) ) ),
+		);
+
+		return array_filter( $found );
+	}
+
 	public static function debug( $message ) {
 		if ( GOOGLE_WEBRISK_DEBUG ) {
 			echo rtrim( $message ) . "\r\n";
