@@ -121,6 +121,23 @@ class Google_Webrisk {
 		}
 	}
 
+	public static function get_abbrev_type( $type = 0 ) {
+		$type = self::get_threat_type( $type );
+
+		switch ( $type ) {
+			case 'THREAT_TYPE_UNSPECIFIED':
+				return 'TTU';
+			case 'MALWARE':
+				return 'Malware';
+			case 'SOCIAL_ENGINEERING':
+				return 'SocEng';
+			case 'UNWANTED_SOFTWARE':
+				return 'UnwSof';
+		}
+
+		return $type;
+	}
+
 	private static function clear_db( $type ) {
 		global $wpdb;
 		$table = self::get_db_table( $type );
@@ -237,6 +254,7 @@ class Google_Webrisk {
 
 	public function update_hashes( $type ) {
 		$threat_type = self::get_threat_type( $type );
+		$abbrev_type = self::get_abbrev_type( $type );
 		$table       = self::get_db_table( $type );
 
 		$next_diff = self::get_option( "webrisk_{$threat_type}_next_diff" );
@@ -306,7 +324,10 @@ class Google_Webrisk {
 			self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
 
 			self::log( sprintf( 'Incomplete %s %s operation. Checksum mismatch!', $threat_type, $json->responseType ) );
-			self::stat( "{$threat_type}-{$json->responseType}-checksum-fail" );
+			// SOCIAL_ENGINEERING-RESET-checksum-fail = 38 characters 🙅‍♂️
+			// SocEng-RESET-checksum-fail = 26 characters 🆗
+			// Malware-RESET-checksum-fail = 27 characters 🆗
+			self::stat( "{$abbrev_type}-{$json->responseType}-checksum-fail" );
 			return new WP_Error( 'checksum-mismatch', 'The checksum calculated does not match expected.', $response );
 		} else {
 			self::debug( "Checksums match.  Woot!" );
@@ -317,10 +338,10 @@ class Google_Webrisk {
 		self::set_option( "webrisk_{$threat_type}_checksum", $expected_checksum );
 
 		self::log( sprintf( 'Completed %s %s operation. %d prefixes added, %d prefixes removed.', $threat_type, $json->responseType, $added_total, $deleted_total ) );
-		self::stat( "{$threat_type}-{$json->responseType}-success" );
-		self::stat( "{$threat_type}-{$json->responseType}-qty-add", $added_total );
+		self::stat( "{$abbrev_type}-{$json->responseType}-success" );
+		self::stat( "{$abbrev_type}-{$json->responseType}-qty-add", $added_total );
 		if ( $deleted_total ) {
-			self::stat( "{$threat_type}-{$json->responseType}-qty-del", $deleted_total );
+			self::stat( "{$abbrev_type}-{$json->responseType}-qty-del", $deleted_total );
 		}
 
 		return true;
