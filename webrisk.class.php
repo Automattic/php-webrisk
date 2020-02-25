@@ -50,6 +50,7 @@ class Google_Webrisk {
 			self::stat( 'cache-hit-false-positive' );
 			return false;
 		}
+		self::stat( 'cache-miss' );
 		return false;
 	}
 
