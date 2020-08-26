@@ -75,12 +75,20 @@ class Google_Webrisk {
 		$found = false;
 		$hash_prefixes = self::uri_hash_prefixes( $url );
 		$hash_placeholders = implode( ', ', array_fill( 0, sizeof( $hash_prefixes ), '%s' ) );
-		$sql = "SELECT `hash` FROM %s WHERE `hash` IN ( {$hash_placeholders} )";
 
 		$found = array(
-			'MALWARE'            => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 1 ) ], $hash_prefixes ) ) ),
-			'SOCIAL_ENGINEERING' => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 2 ) ], $hash_prefixes ) ) ),
-			'UNWANTED_SOFTWARE'  => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 3 ) ], $hash_prefixes ) ) ),
+			'MALWARE' => $wpdb->get_col( $wpdb->prepare(
+					"SELECT `hash` FROM " . self::get_db_table( 1 ) . " WHERE `hash` IN ( {$hash_placeholders} )",
+					$hash_prefixes
+				) ),
+			'SOCIAL_ENGINEERING' => $wpdb->get_col( $wpdb->prepare(
+					"SELECT `hash` FROM " . self::get_db_table( 2 ) . " WHERE `hash` IN ( {$hash_placeholders} )",
+					$hash_prefixes
+				) ),
+			'UNWANTED_SOFTWARE' => $wpdb->get_col( $wpdb->prepare(
+					"SELECT `hash` FROM " . self::get_db_table( 3 ) . " WHERE `hash` IN ( {$hash_placeholders} )",
+					$hash_prefixes
+				) ),
 		);
 
 		return array_filter( $found );
