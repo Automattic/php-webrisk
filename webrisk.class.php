@@ -20,8 +20,7 @@ class Google_Webrisk {
 	/**
 	 * Returns truthy if the url is naughty.  False = a-ok!
 	 */
-	public function check_url( $url ) {
-		if ( $found = check_hash_cache( $url ) ) {
+		if ( $found = $this->check_hash_cache( $url ) ) {
 			self::stat( 'cache-hit' );
 			// Okay so the has prefix says it's a maybe, let's confirm with Google before giving an answer.
 			$url = $this->get_api_uri( 'uris:search', array( 'url' => $url ) );
