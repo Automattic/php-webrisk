@@ -20,21 +20,28 @@ class Google_Webrisk {
 	/**
 	 * Returns truthy if the url is naughty.  False = a-ok!
 	 */
-	public function check_url( $url ) {
-		if ( $found = check_hash_cache( $url ) ) {
+	public function check_url( $url, $local_cache_only = false ) {
+		if ( $found = $this->check_hash_cache( $url ) ) {
 			self::stat( 'cache-hit' );
-			// Okay so the has prefix says it's a maybe, let's confirm with Google before giving an answer.
-			$url = $this->get_api_uri( 'uris:search', array( 'url' => $url ) );
 
-			foreach ( $found as $which_list => $iffy_prefixes ) {
-				$url .= "&threatTypes={$which_list}";
+			if ( $local_cache_only ) {
+				return $found;
 			}
 
-			$response = $this->query_uri( $url, true );
+			// Okay so the has prefix says it's a maybe, let's confirm with Google before giving an answer.
+			$api_url = $this->get_api_uri( 'uris:search', array( 'uri' => $url ) );
 
-			if ( '{}' !== $response ) {
+			foreach ( $found as $which_list => $iffy_prefixes ) {
+				$api_url .= "&threatTypes={$which_list}";
+			}
+
+			$response = $this->query_uri( $api_url );
+
+			if ( '{}' !== trim( $response ) ) {
 				self::stat( 'cache-hit-confirmed' );
 				$json = json_decode( $response );
+				self::log( "Found cache hit confirmation for '{$url}' -- " . json_encode( $json ) );
+
 				/*
 				 * This should look something like:
 				 *
@@ -60,15 +67,28 @@ class Google_Webrisk {
 	public static function check_hash_cache( $url ) {
 		global $wpdb;
 
+		// Catch test url in local cache so it propagates through.
+		if ( 'http://testsafebrowsing.appspot.com/s/malware.html' === $url ) {
+			return [ 'MALWARE' => 'deadbeef' ];
+		}
+
 		$found = false;
 		$hash_prefixes = self::uri_hash_prefixes( $url );
 		$hash_placeholders = implode( ', ', array_fill( 0, sizeof( $hash_prefixes ), '%s' ) );
-		$sql = "SELECT `hash` FROM %s WHERE `hash` IN ( {$hash_placeholders} )";
 
 		$found = array(
-			'MALWARE'            => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 1 ) ], $hash_prefixes ) ) ),
-			'SOCIAL_ENGINEERING' => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 2 ) ], $hash_prefixes ) ) ),
-			'UNWANTED_SOFTWARE'  => $wpdb->get_col( $wpdb->prepare( $sql, array_merge( [ self::get_db_table( 3 ) ], $hash_prefixes ) ) ),
+			'MALWARE' => $wpdb->get_col( $wpdb->prepare(
+					"SELECT `hash` FROM " . self::get_db_table( 1 ) . " WHERE `hash` IN ( {$hash_placeholders} )",
+					$hash_prefixes
+				) ),
+			'SOCIAL_ENGINEERING' => $wpdb->get_col( $wpdb->prepare(
+					"SELECT `hash` FROM " . self::get_db_table( 2 ) . " WHERE `hash` IN ( {$hash_placeholders} )",
+					$hash_prefixes
+				) ),
+			'UNWANTED_SOFTWARE' => $wpdb->get_col( $wpdb->prepare(
+					"SELECT `hash` FROM " . self::get_db_table( 3 ) . " WHERE `hash` IN ( {$hash_placeholders} )",
+					$hash_prefixes
+				) ),
 		);
 
 		return array_filter( $found );
@@ -228,16 +248,17 @@ class Google_Webrisk {
 	 * as automatically adding the api key for all requests.
 	 */
 	public function get_api_uri( $endpoint = '', $query_args = array() ) {
+		$url = null;
+
 		switch( $endpoint ) {
 			case 'hashes:search':
 			case 'threatLists:computeDiff':
+			case 'uris:search':
 				$url = self::DOMAIN . '/' . self::VERSION . '/' . $endpoint . '?key=' . $this->apikey;
 				break;
-			case 'uris:search':
-				$url = self::DOMAIN . '/' . self::VERSION . '/' . $endpoint;
-				break;
 			default:
-				$url = null;
+				self::debug( "Error: API Endpoint {$endpoint} not recognized." );
+				break;
 		}
 
 		// If we're passing any params in, append them here.
@@ -410,7 +431,7 @@ class Google_Webrisk {
 	/**
 	 * Generic php code.  Better to use `wp_remote_get()` if available.
 	 */
-	public function query_uri( $uri, $use_bearer_token = false ) {
+	public function query_uri( $uri ) {
 		$opts = array(
 			'http' => array(
 				'method' => 'GET',
@@ -420,12 +441,12 @@ class Google_Webrisk {
 			)
 		);
 
-		if ( $use_bearer_token ) {
-			$opts['http']['header'][] = 'Authorization: Bearer ' . $this->apikey;
-		}
-
 		$context = stream_context_create( $opts );
-		return file_get_contents( $uri, false, $context );
+		$contents = file_get_contents( $uri, false, $context );
+
+		// var_dump( $http_response_header );
+
+		return $contents;
 	}
 
 	/**
