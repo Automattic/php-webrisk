@@ -37,7 +37,7 @@ class Google_Webrisk {
 
 			$response = $this->query_uri( $api_url );
 
-			if ( '{}' !== $response ) {
+			if ( '{}' !== trim( $response ) ) {
 				self::stat( 'cache-hit-confirmed' );
 				$json = json_decode( $response );
 				/*
