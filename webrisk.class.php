@@ -29,13 +29,13 @@ class Google_Webrisk {
 			}
 
 			// Okay so the has prefix says it's a maybe, let's confirm with Google before giving an answer.
-			$url = $this->get_api_uri( 'uris:search', array( 'url' => $url ) );
+			$api_url = $this->get_api_uri( 'uris:search', array( 'uri' => $url ) );
 
 			foreach ( $found as $which_list => $iffy_prefixes ) {
-				$url .= "&threatTypes={$which_list}";
+				$api_url .= "&threatTypes={$which_list}";
 			}
 
-			$response = $this->query_uri( $url, true );
+			$response = $this->query_uri( $api_url );
 
 			if ( '{}' !== $response ) {
 				self::stat( 'cache-hit-confirmed' );
