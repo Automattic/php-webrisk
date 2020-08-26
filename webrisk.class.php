@@ -40,6 +40,8 @@ class Google_Webrisk {
 			if ( '{}' !== trim( $response ) ) {
 				self::stat( 'cache-hit-confirmed' );
 				$json = json_decode( $response );
+				self::log( "Found cache hit confirmation for '{$url}' -- " . json_encode( $json ) );
+
 				/*
 				 * This should look something like:
 				 *
