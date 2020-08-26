@@ -67,6 +67,11 @@ class Google_Webrisk {
 	public static function check_hash_cache( $url ) {
 		global $wpdb;
 
+		// Catch test url in local cache so it propagates through.
+		if ( 'http://testsafebrowsing.appspot.com/s/malware.html' === $url ) {
+			return [ 'MALWARE' => 'deadbeef' ];
+		}
+
 		$found = false;
 		$hash_prefixes = self::uri_hash_prefixes( $url );
 		$hash_placeholders = implode( ', ', array_fill( 0, sizeof( $hash_prefixes ), '%s' ) );
