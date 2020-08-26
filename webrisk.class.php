@@ -228,16 +228,17 @@ class Google_Webrisk {
 	 * as automatically adding the api key for all requests.
 	 */
 	public function get_api_uri( $endpoint = '', $query_args = array() ) {
+		$url = null;
+
 		switch( $endpoint ) {
 			case 'hashes:search':
 			case 'threatLists:computeDiff':
+			case 'uris:search':
 				$url = self::DOMAIN . '/' . self::VERSION . '/' . $endpoint . '?key=' . $this->apikey;
 				break;
-			case 'uris:search':
-				$url = self::DOMAIN . '/' . self::VERSION . '/' . $endpoint;
-				break;
 			default:
-				$url = null;
+				self::debug( "Error: API Endpoint {$endpoint} not recognized." );
+				break;
 		}
 
 		// If we're passing any params in, append them here.
@@ -410,7 +411,7 @@ class Google_Webrisk {
 	/**
 	 * Generic php code.  Better to use `wp_remote_get()` if available.
 	 */
-	public function query_uri( $uri, $use_bearer_token = false ) {
+	public function query_uri( $uri ) {
 		$opts = array(
 			'http' => array(
 				'method' => 'GET',
@@ -420,12 +421,12 @@ class Google_Webrisk {
 			)
 		);
 
-		if ( $use_bearer_token ) {
-			$opts['http']['header'][] = 'Authorization: Bearer ' . $this->apikey;
-		}
-
 		$context = stream_context_create( $opts );
-		return file_get_contents( $uri, false, $context );
+		$contents = file_get_contents( $uri, false, $context );
+
+		// var_dump( $http_response_header );
+
+		return $contents;
 	}
 
 	/**
