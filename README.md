@@ -1,6 +1,10 @@
 # PHP Webrisk
 A PHP Client for Google's WebRisk API.
 
+# License
+
+GPL
+
 # Implementation (from scratch):
 
 This is made to be run either in WordPress (using WordPress's native DB class) but would probably also work with something like the [EZSQL class](https://github.com/ezSQL/ezsql) which WordPress's WPDB class is derived from.
