@@ -222,8 +222,8 @@ class Google_Webrisk {
 
 		self::debug(  "Inserting a total of " . sizeof( $hash_prefixes ) . " hashes into `{$table}` in {$chunk_size} unit chunks…" );
 
-		while ( sizeof( $hash_prefixes ) ) {
-			$insert_batch = array_splice( $hash_prefixes, 0, $chunk_size );
+		for ( $i = 0; $i < count( $hash_prefixes ); $i += $chunk_size ) {
+			$insert_batch = array_slice( $hash_prefixes, $i, $chunk_size );
 			$imploded = "'" . implode( "'), ('", $insert_batch ) . "'";
 			$sql = "INSERT INTO `{$table}` (`hash`) VALUES ({$imploded})";
 
