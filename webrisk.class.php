@@ -325,15 +325,27 @@ class Google_Webrisk {
 
 		$hashes = $json->additions->rawHashes;
 		$prefixes = array();
+		$chunk_threshold = 500;
 		foreach ( $hashes as $hash_additions ) {
 			$new_prefixes = str_split(
 				bin2hex( base64_decode( $hash_additions->rawHashes ) ),
 				2 * $hash_additions->prefixSize
 			);
 			$prefixes = array_merge( $prefixes, $new_prefixes );
+
+			// Chunk the $prefixes so we don't run OOM
+			if ( sizeof( $prefixes ) > $chunk_threshold ) {
+				self::store_prefixes( $table, $prefixes );
+				$added_total += sizeof( $prefixes );
+
+				$prefixes = array();
+			}
 		}
-		self::store_prefixes( $table, $prefixes );
-		$added_total += sizeof( $prefixes );
+		// If the last chunk was less than $chunk_threshold, don't forget to add those too
+		if ( ! empty( $prefixes ) ) {
+			self::store_prefixes( $table, $prefixes );
+			$added_total += sizeof( $prefixes );
+		}
 
 		self::debug( "base64 checksum: {$json->checksum->sha256}" );
 
