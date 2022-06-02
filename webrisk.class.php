@@ -323,28 +323,32 @@ class Google_Webrisk {
 			$deleted_total += sizeof( $indices );
 		}
 
-		$hashes = $json->additions->rawHashes;
-		$prefixes = array();
-		$chunk_threshold = 500;
-		foreach ( $hashes as $hash_additions ) {
-			$new_prefixes = str_split(
-				bin2hex( base64_decode( $hash_additions->rawHashes ) ),
-				2 * $hash_additions->prefixSize
-			);
-			$prefixes = array_merge( $prefixes, $new_prefixes );
+		foreach ( $json->additions->rawHashes as $hash_additions ) {
+			$actual_hashes = bin2hex( base64_decode( $hash_additions->rawHashes ) );
 
-			// Chunk the $prefixes so we don't run OOM
-			if ( sizeof( $prefixes ) > $chunk_threshold ) {
+			$prefixes = array();
+			$single_prefix = '';
+			for ( $i = 0; $i < strlen( $actual_hashes ); $i++ ) {
+				$single_prefix .= $actual_hashes[ $i ];
+
+				if ( strlen( $single_prefix ) === 2 * $hash_additions->prefixSize ) {
+					$prefixes[] = $single_prefix;
+
+					$single_prefix = '';
+				}
+
+				if ( count( $prefixes ) === 1000 ) {
+					self::store_prefixes( $table, $prefixes );
+					$added_total += sizeof( $prefixes );
+
+					$prefixes = array();
+				}
+			}
+
+			if ( ! empty( $prefixes ) ) {
 				self::store_prefixes( $table, $prefixes );
 				$added_total += sizeof( $prefixes );
-
-				$prefixes = array();
 			}
-		}
-		// If the last chunk was less than $chunk_threshold, don't forget to add those too
-		if ( ! empty( $prefixes ) ) {
-			self::store_prefixes( $table, $prefixes );
-			$added_total += sizeof( $prefixes );
 		}
 
 		self::debug( "base64 checksum: {$json->checksum->sha256}" );
